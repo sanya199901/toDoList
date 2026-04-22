@@ -1,24 +1,32 @@
-# Column and types help us define what columns our database table has
-from sqlalchemy import Column, Integer, String, Boolean
+# Column types for defining table structure
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from database.connection import Base
 
 
 # --- TaskTable ---
-# This class represents the "tasks" table in your MySQL database
-# Each attribute = one column in the table
+# Updated this week — tasks now have an owner (user)
 class TaskTable(Base):
 
-    # Name of the table in MySQL
     __tablename__ = "tasks"
 
-    # Primary key — auto-increments for each new task (1, 2, 3...)
+    # Primary key — auto-increments
     id = Column(Integer, primary_key=True, index=True)
 
-    # Task title — required, max 200 characters
+    # Task title — required
     title = Column(String(200), nullable=False)
 
-    # Task description — optional, max 500 characters
+    # Task description — optional
     description = Column(String(500), nullable=True)
 
-    # Whether the task is done or not — defaults to False
+    # Whether task is done — defaults to False
     completed = Column(Boolean, default=False)
+
+    # ✅ NEW THIS WEEK — Foreign key linking task to a user
+    # This means every task MUST belong to a user
+    # ondelete="CASCADE" means if user is deleted, their tasks are deleted too
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    # ✅ NEW THIS WEEK — Relationship to UserTable
+    # This lets us access task.owner.name, task.owner.email etc.
+    owner = relationship("UserTable", back_populates="tasks")
