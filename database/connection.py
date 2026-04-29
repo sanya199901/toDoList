@@ -1,35 +1,33 @@
-# SQLAlchemy is the ORM (Object Relational Mapper) we use to talk to MySQL
-# Instead of writing raw SQL, we write Python and SQLAlchemy translates it
+# SQLAlchemy setup — now reads credentials from .env via config.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-# --- Database Connection URL ---
-# Format: mysql+pymysql://<username>:<password>@<host>/<database_name>
-# ⚠️ Change "root" and "your_password" to match your MySQL Workbench credentials
-DATABASE_URL = "mysql+pymysql://root:your_new_password@localhost/todo_db"
+# Import settings from config.py instead of hardcoding credentials
+from config import settings
 
-# --- Engine ---
-# The engine is the actual connection to your MySQL database
+# Build the database URL from .env variables
+# No more hardcoded passwords! ✅
+DATABASE_URL = (
+    f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}"
+    f"@{settings.DB_HOST}/{settings.DB_NAME}"
+)
+
+# Engine — actual connection to MySQL
 engine = create_engine(DATABASE_URL)
 
-# --- Session ---
-# A session is like a "conversation" with the database
-# Every request gets its own session, and we close it when done
+# Session — one per request, closed after
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# --- Base Class ---
-# All our database table models will inherit from this Base class
+# Base class — all table models inherit from this
 class Base(DeclarativeBase):
     pass
 
 
-# --- Dependency ---
-# This function is used in our endpoints to get a DB session
-# It automatically closes the session after the request is done
+# Dependency — gives each endpoint a fresh DB session
 def get_db():
     db = SessionLocal()
     try:
-        yield db  # Give the session to the endpoint
+        yield db
     finally:
-        db.close()  # Always close after use
+        db.close()
